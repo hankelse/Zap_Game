@@ -1,0 +1,20 @@
+        VERSIONS:
+
+BETAS:
+---1---
+Additions:
+- 2 movable nodes with laser in between
+- Laser can be activated with Space Bar
+- Laser deflects Balls that bounce around screen
+
+
+---1.1---
+Additions:
+- Balls now destroy nodes on collision
+- Pickups
+- Pickups can restore a node
+
+Changes:
+- Split init.py into sprites.py and init.py
+
+
