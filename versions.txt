@@ -13,8 +13,16 @@ Additions:
 - Balls now destroy nodes on collision
 - Pickups
 - Pickups can restore a node
+- Score implemented w/ a max of 100 and quick hits and alternating sides increasing a multiplier
 
 Changes:
-- Split init.py into sprites.py and init.py
+- Split init.py into sprites.py, game_objects.py, init.py
+
+---1.2---
+Additions: 
+
+
+
+Changes:
 
 

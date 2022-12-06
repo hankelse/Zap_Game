@@ -15,22 +15,6 @@ pygame.init()
 
 
 def shake(shake_amount):
-    
-    # sl = shake_level
-    # if shake_amount != 0:
-    #     if shake_amount == sl:
-    #         return (-sl)
-    #     elif shake_amount == -sl:
-    #         return (sl-1)
-    #     elif shake_amount == sl-1:
-    #         return (-sl+1)
-    #     elif shake_amount == -sl+1:
-    #         return (sl//2)
-    #     elif shake_amount == sl//2:
-    #         return (-sl//2)
-    #     elif shake_amount == -sl//2:
-    #         return (0)
-
     return -1*shake_amount//2
 
 def main():
@@ -42,7 +26,7 @@ def main():
     node_b = sprites.Node(600, 400, (0, 150, 0), stgs.bindings, "B", 10, (-stgs.ns, stgs.ns), (-stgs.ns, stgs.ns), stgs.screen_size)
     laser = sprites.Laser((35, 50, 35), 40, stgs.bindings)
     player = sprites.Player(node_a, node_b, laser, stgs.bindings, stgs.screen_size)
-    balls = [sprites.Ball(random.randint(100, 700), random.randint(100, 700), random.randint(0, int(math.pi*2)), random.randint(5, 10), random.randint(40, 75), (random.randint(35, 255),random.randint(35, 255), random.randint(35, 255)), stgs.screen_size) for i in range(stgs.num_balls)]
+    balls = [sprites.Ball(random.randint(100, 200), random.randint(100, 200), random.randint(0, int(math.pi*2)), random.randint(5, 10), random.randint(40, 75), (random.randint(35, 255),random.randint(35, 255), random.randint(35, 255)), stgs.screen_size) for i in range(stgs.num_balls)]
     #pickups = [Pickup(random.randint(0,screen_width), random.randint(0, screen_height), "node") for i in range(num_pickups)]
     ui = sprites.UI(stgs.screen_size)
     pickups = []
