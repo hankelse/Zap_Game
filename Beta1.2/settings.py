@@ -13,21 +13,34 @@ shake_levels = {
 }
 
 #---Performance_Settings---#
-max_fps = 45 #frames per second
+max_fps = 60 #frames per second
 
 #---Sprite Settings---#
-node_speed = ns = 8
-num_balls = 3
+
+#nodes
+node_speed = ns = 5
+
+#balls
+balls_speed_range = [2, 4]
+num_balls = 1
+
+#pickups
 num_pickups = 2
+
+node_colors ={
+    "A":(100, 150, 0),
+    "B":(0, 150, 100),
+    "C":(150, 150, 150),
+}
 
 #---GAMEPLAY SETTINGS---#
 max_score = 100
-alt_strk_multi = 1.5
-quick_hit_multi = 1.075
+alt_strk_multi = 1
+quick_hit_multi = 1
 qhmulti_interval = 2
 
 #---Control_Settings---#
-
+ 
 bindings = {
     "A UP": K_w,
     "A DOWN": K_s,
@@ -41,5 +54,6 @@ bindings = {
 
     "ZAP": K_SPACE,
     
-    "QUIT": K_ESCAPE
+    "QUIT": K_ESCAPE,
+    "PLAY AGAIN": K_SPACE,
 }

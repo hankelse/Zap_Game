@@ -16,7 +16,7 @@ Additions:
 - Score implemented w/ a max of 100 and quick hits and alternating sides increasing a multiplier
 
 Changes:
-- Split init.py into sprites.py, game_objects.py, init.py
+- Split init.py into sprites.py, game_objects.py, settings.py, and init.py
 
 ---1.2---
 Additions: 

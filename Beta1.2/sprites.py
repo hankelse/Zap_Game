@@ -5,15 +5,6 @@ import time
 pygame.font.init()
 import game_objects as gobs
 
-#global score, shake_amount
-# score = 0
-# shake_amount = 0
-# last_side_hit = "1" #last side of laser to be hit
-# last_hit = 0
-# alt_streak_multi = 1
-# quick_hit_multi = 1
-
-
 
 def distance(coord1, coord2):
     xdis = abs(coord1[0] - coord2[0])
@@ -40,16 +31,17 @@ def on_screen(size, coord, coord_type = None, buffer=None): #buffer should be si
 
 
 class Node:
-    def __init__(self, startingx, startingy, color, bindings, type, size, xv_range, yv_range, screen_size):
+    def __init__(self, startingx, startingy, bindings, type, size, xv_range, yv_range, screen_size):
+        
         self.screen_size = screen_size
         self.x, self.y, self.size = startingx, startingy, size 
         self.max_size = 20
         self.min_size = 10
         self.type = type
         self.bindings = bindings
-        self.color = color
-        self.base_color = color
-
+        self.color = stgs.node_colors[type]
+        #self.base_color = self.color
+ 
         self.xv, self.yv = 0, 0
         self.acceleration = 2
         self.deceleration = 0.5
@@ -57,56 +49,73 @@ class Node:
         self.yv_range = self.yv_min, self.yv_max = yv_range
         self.screen_size = screen_size
 
-    def update(self, keys):
-        self.color = self.base_color
-        self.update_motion(keys) 
+    def update(self, keys, nodes):
+        self.color = stgs.node_colors[self.type]
+        self.update_motion(keys, nodes) 
     
     def zap(self):
         self.color = (255, 0, 0)
 
-    def update_motion(self, keys):
-        #UP and DOWN VELOCITY
-        if keys[self.bindings[self.type+" UP"]]:
-            self.yv -= self.acceleration
-            if self.yv < self.yv_min: self.yv = self.yv_min
-        elif keys[self.bindings[self.type+" DOWN"]]:
-            self.yv += self.acceleration
-            if self.yv > self.yv_max: self.yv = self.yv_max
-        else:
-            if self.yv != 0:
-                if self.yv>0: 
-                    self.yv -= self.deceleration
-                    if self.yv <0: self.yv = 0
-                if self.yv<0: 
-                    self.yv += self.deceleration
-                    if self.yv >0: self.yv = 0
-        #LEFT AND RIGHT VELOCITY
-        if keys[self.bindings[self.type+" LEFT"]]:
-            self.xv -= self.acceleration
-            if self.xv < self.xv_min: self.xv = self.xv_min
-        elif keys[self.bindings[self.type+" RIGHT"]]:
-            self.xv += self.acceleration
-            if self.xv > self.xv_max: self.xv = self.xv_max
-        else:
-            if self.xv != 0:
-                if self.xv>0: 
-                    self.xv -= self.deceleration
-                    if self.xv <0: self.xv = 0
-                if self.xv<0: 
-                    self.xv += self.deceleration
-                    if self.xv >0: self.xv = 0
+    def update_motion(self, keys, nodes):
+        if self.type == "A" or self.type == "B":
+            #UP and DOWN VELOCITY
+            if keys[self.bindings[self.type+" UP"]]:
+                self.yv -= self.acceleration
+                if self.yv < self.yv_min: self.yv = self.yv_min
+            elif keys[self.bindings[self.type+" DOWN"]]:
+                self.yv += self.acceleration
+                if self.yv > self.yv_max: self.yv = self.yv_max
+            else:
+                if self.yv != 0:
+                    if self.yv>0: 
+                        self.yv -= self.deceleration
+                        if self.yv <0: self.yv = 0
+                    if self.yv<0: 
+                        self.yv += self.deceleration
+                        if self.yv >0: self.yv = 0
+            #LEFT AND RIGHT VELOCITY
+            if keys[self.bindings[self.type+" LEFT"]]:
+                self.xv -= self.acceleration
+                if self.xv < self.xv_min: self.xv = self.xv_min
+            elif keys[self.bindings[self.type+" RIGHT"]]:
+                self.xv += self.acceleration
+                if self.xv > self.xv_max: self.xv = self.xv_max
+            else:
+                if self.xv != 0:
+                    if self.xv>0: 
+                        self.xv -= self.deceleration
+                        if self.xv <0: self.xv = 0
+                    if self.xv<0: 
+                        self.xv += self.deceleration
+                        if self.xv >0: self.xv = 0
 
-        # MOVEMENT
-        new_x, new_y = self.x + self.xv, self.y + self.yv
-        x_is_valid, y_is_valid = on_screen(self.screen_size, (new_x, new_y), buffer=self.size/2)
-        if x_is_valid: self.x = new_x
-        if y_is_valid: self.y = new_y
+            # MOVEMENT
+            new_x, new_y = self.x + self.xv, self.y + self.yv
+            x_is_valid, y_is_valid = on_screen(self.screen_size, (new_x, new_y), buffer=self.size/2)
+            if x_is_valid: self.x = new_x
+            if y_is_valid: self.y = new_y
+        
+        elif self.type == "C":
+            node_a, node_b = nodes[0], nodes[1]
+            node_distance = distance((node_a.x, node_a.y), (node_b.x, node_b.y))
+            angle = math.atan2(node_a.y-node_b.y, node_a.x-node_b.x) - 2*math.pi/3
+            self.x = node_a.x + math.cos(angle)*node_distance
+            self.y = node_a.y + math.sin(angle)*node_distance
+            if self.x < self.size/2: self.x = self.size/2
+            elif self.x > stgs.screen_width-self.size/2: self.x = stgs.screen_width-self.size/2
+
+            if self.y < self.size/2: self.y = self.size/2
+            elif self.y > stgs.screen_height-self.size/2: self.y = stgs.screen_height-self.size/2
+
+
+
 
     def adjust_size(self, ratio):
         self.size = self.max_size - self.max_size*ratio
         if self.size < self.min_size: self.size = self.min_size
 
     def draw(self, surface):
+        
         pygame.draw.ellipse(surface, self.color, pygame.Rect(self.x-self.size/2, self.y-self.size/2, self.size, self.size))
 
 class Player:
@@ -123,11 +132,11 @@ class Player:
 
         else: #If Zap is not active
             #update Nodes position
-            for node in self.nodes: node.update(keys)
+            for node in self.nodes: node.update(keys, self.nodes)
             
 
             #find distance for updated nodes and use to update laser and nodes_size
-            if len(self.nodes) == 2: node_dist = self.node_distance()
+            if len(self.nodes) > 1: node_dist = self.node_distance()
             else: node_dist = 0.1
 
             self.laser.update(keys, self.nodes, node_dist)
@@ -139,8 +148,10 @@ class Player:
                 if distance((ball.x, ball.y), (node.x, node.y))<= node.size/2 + ball.size/2:
                     gobs.score = gobs.score//2
                     gobs.shake_amount = stgs.shake_levels["NODE HIT"]
-
                     self.nodes.remove(node)
+                    if len(self.nodes) == 2 and (node.type == "A" or node.type == "B"):
+                        if self.nodes[0].type == "C": self.nodes[0].type = node.type
+                        elif self.nodes[1].type == "C": self.nodes[1].type = node.type
                     pickups.append(Pickup(random.randint(0, self.screen_size[0]), random.randint(0, self.screen_size[1]), "node"))
         
         if len(self.nodes) == 1:
@@ -150,8 +161,16 @@ class Player:
                     if pickup.type == "node":
                         node_type = "A"
                         if self.nodes[0].type == "A": node_type = "B"
-                        self.nodes.append(Node(pickup.x, pickup.y, (0, 150, 0), self.bindings, node_type, self.nodes[0].size, self.nodes[0].xv_range, self.nodes[0].yv_range, self.nodes[0].screen_size))
+                        self.nodes.append(Node(pickup.x, pickup.y, self.bindings, node_type, self.nodes[0].size, self.nodes[0].xv_range, self.nodes[0].yv_range, self.nodes[0].screen_size))
                         pickups.remove(pickup)
+        if len(self.nodes) == 2:
+            for node in self.nodes:
+                for pickup in pickups:
+                    if distance((node.x, node.y), (pickup.x, pickup.y))<= node.size/2 + ball.size/2:
+                        if pickup.type == "node":
+                            node_type = "C"
+                            self.nodes.append(Node(pickup.x, pickup.y, self.bindings, node_type, self.nodes[0].size, self.nodes[0].xv_range, self.nodes[0].yv_range, self.nodes[0].screen_size))
+                            pickups.remove(pickup)
 
 
     
@@ -166,7 +185,7 @@ class Player:
 
 
     def draw(self, surface):
-        if len(self.nodes) == 2:
+        if len(self.nodes) > 1:
             self.laser.draw(surface)
         for node in self.nodes: node.draw(surface)
         
@@ -179,6 +198,7 @@ class Laser:
         self.x1, self.x2, self.y1, self.y2 = 0, 0, 0, 0
         self.bindings = bindings
         self.on=False
+        self.triangulate = False
     
         
     def zap(self): 
@@ -186,7 +206,15 @@ class Laser:
         self.color = (150, 25, 25)
     
     def update(self, keys, nodes, node_dist):
-        if len(nodes) == 2:
+        if len(nodes) == 3:
+            self.triangulate = True
+            self.on = False
+            self.x1, self.y1 = nodes[0].x, nodes[0].y
+            self.x2, self.y2 = nodes[1].x, nodes[1].y
+            self.x3, self.y3 = nodes[2].x, nodes[2].y
+        
+        elif len(nodes) == 2:
+            self.triangulate = False
             self.on = False
             self.color = self.base_color
             self.x1, self.y1 = nodes[0].x, nodes[0].y
@@ -195,6 +223,7 @@ class Laser:
             self.size =self.max_size - self.max_size * node_dist
             if self.size < self.min_size: self.size = self.min_size
         else: 
+            self.triangulate = False
             self.x1 = self.x2 = self.y1 = self.y2 = -10000
 
     
@@ -209,7 +238,13 @@ class Laser:
 
     
     def draw(self, surface):
-        pygame.draw.line(surface, self.color, (self.x1, self.y1), (self.x2, self.y2), int(self.size))
+        if self.triangulate == True:
+            pygame.draw.polygon(surface, self.color, ((self.x1, self.y1), (self.x2, self.y2), (self.x3, self.y3)), int(self.size))
+        else: pygame.draw.line(surface, self.color, (self.x1, self.y1), (self.x2, self.y2), int(self.size))
+        #angle = self.get_angle() - math.pi/2
+        # pygame.draw.line(surface, (255, 0, 0), (self.x1+math.cos(angle)/2, self.y1+math.sin(angle)/2), (self.x2+math.cos(angle)/4, self.y2+math.sin(angle)/4), int(self.size/2))
+        # pygame.draw.line(surface, (0, 0, 255), (self.x1-math.cos(angle)/2, self.y1-math.sin(angle)/2), (self.x2-math.cos(angle)/4, self.y2-math.sin(angle)/4), int(self.size/2))
+        
 
 class Ball:
     def __init__(self, x, y, angle, velocity, size, color, screen_size):
@@ -241,16 +276,19 @@ class Ball:
 
             collisions = 1
             if if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point1, 0.3): 
+                
                 self.bounce_off_line(laser, "1")
                 if gobs.last_side_hit == "2": gobs.alt_streak_multi *= stgs.alt_strk_multi
-                else: gobs.alt_streak_multi = 1
+                elif gobs.last_hit == "1": gobs.alt_streak_multi = 1
                 gobs.last_side_hit = "1"
-
-            elif if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point2, 0.3): 
+                print(gobs.last_side_hit)   
+            elif if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point2, 0.3):
+                
                 self.bounce_off_line(laser, "2")
                 if gobs.last_side_hit == "1": gobs.alt_streak_multi *= stgs.alt_strk_multi
-                else: gobs.alt_streak_multi = 1
+                elif gobs.last_hit == "2": gobs.alt_streak_multi = 1
                 gobs.last_side_hit = "2"
+                print(gobs.last_side_hit) 
             else: collisions = 0
             
             if collisions == 1: 
@@ -313,6 +351,10 @@ class UI:
         self.m_font = pygame.font.SysFont(stgs.font_name, int(self.height*1/3))
         
 
+        self.game_over_font = pygame.font.SysFont(stgs.font_name, stgs.screen_height//10)
+        self.game_over_surface = self.game_over_font.render(("GAME OVER"), None, (140, 150, 140))
+        self.game_over_text_coords = 400-self.game_over_surface.get_width()/2, 400-self.game_over_surface.get_height()/2
+
     def update(self, score, player):
         #self.potential_score = score*node_distance
         self.score = score
@@ -340,3 +382,6 @@ class UI:
         surface.blit(score_surface, ( (self.x+self.width/2) - score_surface.get_width()/2  , (self.y+self.height/2)-score_surface.get_height()/2))
         surface.blit(potent_surface, ( (self.x+self.width/2) + score_surface.get_width()/2 + potent_surface.get_width()/2 , (self.y+self.height*(1/2))-potent_surface.get_height()/2))
         surface.blit(multi_surface, ( (self.x+self.width/2) + score_surface.get_width()/2 + 1.25*potent_surface.get_width() + multi_surface.get_width()/2 , (self.y+self.height*(1/2))-multi_surface.get_height()/2))
+
+    def display_game_over(self, surface):
+        surface.blit(self.game_over_surface, (self.game_over_text_coords))
