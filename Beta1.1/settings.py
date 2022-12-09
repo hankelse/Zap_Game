@@ -17,7 +17,7 @@ max_fps = 45 #frames per second
 
 #---Sprite Settings---#
 node_speed = ns = 8
-num_balls = 1
+num_balls = 3
 num_pickups = 2
 
 #---GAMEPLAY SETTINGS---#

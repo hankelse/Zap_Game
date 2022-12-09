@@ -206,6 +206,7 @@ class Laser:
         self.color = (150, 25, 25)
     
     def update(self, keys, nodes, node_dist):
+        self.color = self.base_color
         if len(nodes) == 3:
             self.triangulate = True
             self.on = False
@@ -239,7 +240,10 @@ class Laser:
     
     def draw(self, surface):
         if self.triangulate == True:
-            pygame.draw.polygon(surface, self.color, ((self.x1, self.y1), (self.x2, self.y2), (self.x3, self.y3)), int(self.size))
+            if self.on == False: pygame.draw.polygon(surface, self.color, ((self.x1, self.y1), (self.x2, self.y2), (self.x3, self.y3)), int(self.size))
+            else: 
+                pygame.draw.polygon(surface, self.color, ((self.x1, self.y1), (self.x2, self.y2), (self.x3, self.y3)))
+                pygame.draw.polygon(surface, self.color, ((self.x1, self.y1), (self.x2, self.y2), (self.x3, self.y3)), int(self.size))
         else: pygame.draw.line(surface, self.color, (self.x1, self.y1), (self.x2, self.y2), int(self.size))
         #angle = self.get_angle() - math.pi/2
         # pygame.draw.line(surface, (255, 0, 0), (self.x1+math.cos(angle)/2, self.y1+math.sin(angle)/2), (self.x2+math.cos(angle)/4, self.y2+math.sin(angle)/4), int(self.size/2))

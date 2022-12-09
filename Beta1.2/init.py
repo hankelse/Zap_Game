@@ -8,8 +8,6 @@ import settings as stgs
 pygame.init()
 
 
-
-
 def shake(shake_amount):
     return -1*shake_amount//2
 
@@ -26,10 +24,9 @@ def run():
     #pickups = [Pickup(random.randint(0,screen_width), random.randint(0, screen_height), "node") for i in range(num_pickups)]
     ui = sprites.UI(stgs.screen_size)
     pickups = []
-    gobs.score = 0
+    gobs.score = 100
 
 
-     
 
     while 1:
         ##--Runs no matter what--#
