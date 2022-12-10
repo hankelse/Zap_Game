@@ -18,11 +18,14 @@ Additions:
 Changes:
 - Split init.py into sprites.py, game_objects.py, settings.py, and init.py
 
----1.2---
+---1.2--- First playable edition: Winnable, Losable Game
 Additions: 
-
-
-
+        - Third pickup + Triangulation
+        - Title Screens:
+                - Play Screen
+                - Game Over Screen
+                - Win Screen
+        - Created Game flow: Start-->Game-->Gameover/Win
 Changes:
-
+        - Removed score multiplier (found bug)
 

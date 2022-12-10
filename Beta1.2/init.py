@@ -11,7 +11,7 @@ pygame.init()
 def shake(shake_amount):
     return -1*shake_amount//2
 
-def run():
+def run(welcome):
     #------------SETUP------------#
     cycle_time = 1/stgs.max_fps
     screen = pygame.display.set_mode(stgs.screen_size)
@@ -24,7 +24,7 @@ def run():
     #pickups = [Pickup(random.randint(0,screen_width), random.randint(0, screen_height), "node") for i in range(num_pickups)]
     ui = sprites.UI(stgs.screen_size)
     pickups = []
-    gobs.score = 100
+    gobs.score = 0
 
 
 
@@ -38,18 +38,26 @@ def run():
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT: sys.exit()
+        
+        if welcome == True: 
+            ui.display_welcome(surface)
+            if keys[stgs.bindings["BEGIN"]]: return "RUN AGAIN"
+
 
         #--Runs while Game is being played
-        if len(player.nodes) > 0: 
+        elif len(player.nodes) > 0 and len(balls) > 0: 
             if now - gobs.last_hit > stgs.qhmulti_interval: gobs.quick_hit_multi = 1
 
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == stgs.bindings["ZAP"]: gobs.shake_amount = -stgs.shake_levels["ZAP"]
             
+            
+            for ball in balls: 
+                if ball.update(laser, player.nodes) == False:
+                    balls.remove(ball)
             player.update(keys)
-            for ball in balls: ball.update(laser)
-
+ 
             player.check_node_collisions(balls, pickups)
 
             ui.update(gobs.score, player)
@@ -63,9 +71,15 @@ def run():
             ui.display(surface)
         
         else:
-            ui.display_game_over(surface)
             if keys[stgs.bindings["PLAY AGAIN"]]:
                 return "RUN AGAIN"
+            if len(balls) == 0:
+                ui.display_win(surface)
+                ui.display_play_again(surface)
+            elif len(player.nodes) == 0:   
+                ui.display_game_over(surface)
+                ui.display_play_again(surface)
+            
 
 
         gobs.shake_amount = shake(gobs.shake_amount)
@@ -74,10 +88,13 @@ def run():
         elapsed = time.time()-now
         if elapsed < cycle_time:
             time.sleep(cycle_time-elapsed)
+        #else:print(elapsed-cycle_time)
         
 
 def main():
-    while run() == "RUN AGAIN":
+    welcome = True
+    while run(welcome) == "RUN AGAIN":
+        welcome = False
         continue
 
 main()

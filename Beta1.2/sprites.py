@@ -5,6 +5,16 @@ import time
 pygame.font.init()
 import game_objects as gobs
 
+def point_in_tri(t1, t2, t3, p, buffer=0):
+    #point1, point2, point3 = (tri.x+tri.radius*math.cos(tri.angle), tri.y-tri.radius*math.sin(tri.angle)), (tri.x+tri.radius*math.cos(tri.angle-(2*pi/3)), tri.y-tri.radius*math.sin(tri.angle-(2*pi/3))), (tri.x+tri.radius*math.cos(tri.angle+(2*pi/3)), tri.y-tri.radius*math.sin(tri.angle+(2*pi/3)))
+    ax, ay = t1[0], t1[1]
+    bx, by = t2[0], t2[1]
+    cx, cy = t3[0], t3[1]
+    px, py = p
+    w1 = (ax*(cy-ay) + (py-ay)*(cx-ax)-px*(cy-ay))  /  ((by-ay)*(cx-ax) - (bx-ax)*(cy-ay))
+    w2 = (py-ay-w1*(by-ay)) / (cy-ay)
+    if w1 >= 0-buffer and w2 >= 0-buffer and (w1+w2) <= 1+buffer: return(True)
+    return(False)
 
 def distance(coord1, coord2):
     xdis = abs(coord1[0] - coord2[0])
@@ -127,8 +137,10 @@ class Player:
     
     def update(self, keys): 
         if keys[self.bindings["ZAP"]]:
+            
             for node in self.nodes: node.zap()
             self.laser.zap()
+            gobs.last_zap = time.time()
 
         else: #If Zap is not active
             #update Nodes position
@@ -229,13 +241,38 @@ class Laser:
 
     
     def get_angle(self):
-        xdis = self.x1 - self.x2
-        ydis = self.y1 - self.y2
-        if ydis < 0:
-            xdis = self.x2 - self.x1
-            ydis = self.y2 - self.y1 
+        if self.triangulate == False:
+            xdis = self.x1 - self.x2
+            ydis = self.y1 - self.y2
+            if ydis < 0:
+                xdis = self.x2 - self.x1
+                ydis = self.y2 - self.y1 
 
-        return math.atan2(ydis, xdis)
+            return math.atan2(ydis, xdis)
+        else:
+            xdis = self.x1 - self.x2
+            ydis = self.y1 - self.y2
+            if ydis < 0:
+                xdis = self.x2 - self.x1
+                ydis = self.y2 - self.y1 
+            angle1 = math.atan2(ydis, xdis)
+
+            xdis = self.x1 - self.x3
+            ydis = self.y1 - self.y3
+            if ydis < 0:
+                xdis = self.x3 - self.x1
+                ydis = self.y3 - self.y1 
+            angle2 = math.atan2(ydis, xdis)
+
+            xdis = self.x2 - self.x3
+            ydis = self.y2 - self.y3
+            if ydis < 0:
+                xdis = self.x3 - self.x2
+                ydis = self.y3 - self.y2 
+            angle3 = math.atan2(ydis, xdis)
+
+            return angle1, angle2, angle3
+
 
     
     def draw(self, surface):
@@ -260,55 +297,94 @@ class Ball:
         self.velocity = velocity
         self.screen_size = screen_size
 
-    def bounce_off_line(self, laser, collision):
+    def bounce_off_line(self, laser, collision, index=None):
         #print("yay")
-        original_xv = self.xv
-        if collision == "1": recip = laser.get_angle()+math.pi/2
-        elif collision == "2": recip = laser.get_angle()-math.pi/2
+        if index == None:
+            original_xv = self.xv
+            if collision == "1": recip = laser.get_angle()+math.pi/2
+            elif collision == "2": recip = laser.get_angle()-math.pi/2
+            
+
+        else:
+            angles = laser.get_angle()
+            if collision == "1": recip = angles[index]+math.pi/2
+            elif collision == "2": recip = angles[index]-math.pi/2
+        
         self.xv = (self.velocity*1.3)*math.cos(recip)
-        self.yv = (self.velocity*1.3)*math.sin(recip)    
-        # if (original_xv< 0 and self.xv <0) or (original_xv> 0 and self.xv >0):
-        #     self.xv *= -1
-        #     self.yv *= -1
+        self.yv = (self.velocity*1.3)*math.sin(recip)
 
 
-    def update(self, laser): #checks for bounces off laser, adds to score, checks for off screen, moves ball
-        
+
+    def update(self, laser, nodes): #checks for bounces off laser, adds to score, checks for off screen, moves ball
         if laser.on == True:
-            collision_point1 = self.x + self.size/2 * math.cos(laser.get_angle() - math.pi/2), self.y + self.size/2 *  math.sin(laser.get_angle() - math.pi/2)
-            collision_point2 = self.x - self.size/2 * math.cos(laser.get_angle() - math.pi/2), self.y - self.size/2 *  math.sin(laser.get_angle() - math.pi/2)
+            if laser.triangulate== False:
+            
+                collision_point1 = self.x + self.size/2 * math.cos(laser.get_angle() - math.pi/2), self.y + self.size/2 *  math.sin(laser.get_angle() - math.pi/2)
+                collision_point2 = self.x - self.size/2 * math.cos(laser.get_angle() - math.pi/2), self.y - self.size/2 *  math.sin(laser.get_angle() - math.pi/2)
 
-            collisions = 1
-            if if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point1, 0.3): 
+                collisions = 1
+                if if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point1, 0.3): 
+                    
+                    self.bounce_off_line(laser, "1")
+                    if gobs.last_side_hit == "2": gobs.alt_streak_multi *= stgs.alt_strk_multi
+                    elif gobs.last_hit == "1": gobs.alt_streak_multi = 1
+                    gobs.last_side_hit = "1"
+                    #print(gobs.last_side_hit)   
+                elif if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point2, 0.3):
+                    
+                    self.bounce_off_line(laser, "2")
+                    if gobs.last_side_hit == "1": gobs.alt_streak_multi *= stgs.alt_strk_multi
+                    elif gobs.last_hit == "2": gobs.alt_streak_multi = 1
+                    gobs.last_side_hit = "2"
+                    #print(gobs.last_side_hit) 
+                else: collisions = 0           
+                if collisions == 1: 
+                    if time.time() - gobs.last_hit < stgs.qhmulti_interval: 
+                        gobs.quick_hit_multi *= stgs.quick_hit_multi
+                    gobs.last_hit = time.time()
+                    laser_length = distance((laser.x1, laser.y1), (laser.x2, laser.y2))
+                    gobs.shake_amount = stgs.shake_levels["BALL HIT"]/1131 * (1131-laser_length)
+                    score_addition = collisions * (   (20/1131) *  ( 1131 -  laser_length)  ) * gobs.quick_hit_multi * gobs.alt_streak_multi 
+                    if score_addition != 0:
+                        #print(round(score_addition, 2))
+                        if gobs.score+score_addition <= stgs.max_score: gobs.score += score_addition
+                        else: gobs.score = stgs.max_score
                 
-                self.bounce_off_line(laser, "1")
-                if gobs.last_side_hit == "2": gobs.alt_streak_multi *= stgs.alt_strk_multi
-                elif gobs.last_hit == "1": gobs.alt_streak_multi = 1
-                gobs.last_side_hit = "1"
-                print(gobs.last_side_hit)   
-            elif if_point_on_line(laser.x1, laser.y1, laser.x2, laser.y2, collision_point2, 0.3):
+                # score_addition += points_earned * (20/1131)*()
+            elif len(nodes) == 3:
+
+                if point_in_tri((laser.x1, laser.y1), (laser.x2, laser.y2), (laser.x3, laser.y3), (self.x, self.y)):
+                    gobs.shake_amount = stgs.shake_levels["BALL DESTROYED"]
+                    gobs.score += (stgs.max_score - gobs.score)//stgs.num_balls
+                    return False
                 
-                self.bounce_off_line(laser, "2")
-                if gobs.last_side_hit == "1": gobs.alt_streak_multi *= stgs.alt_strk_multi
-                elif gobs.last_hit == "2": gobs.alt_streak_multi = 1
-                gobs.last_side_hit = "2"
-                print(gobs.last_side_hit) 
-            else: collisions = 0
-            
-            if collisions == 1: 
-                if time.time() - gobs.last_hit < stgs.qhmulti_interval: 
-                    gobs.quick_hit_multi *= stgs.quick_hit_multi
-                gobs.last_hit = time.time()
-                laser_length = distance((laser.x1, laser.y1), (laser.x2, laser.y2))
-                gobs.shake_amount = stgs.shake_levels["BALL HIT"]/1131 * (1131-laser_length)
-                score_addition = collisions * (   (10/1131) *  ( 1131 -  laser_length)  ) * gobs.quick_hit_multi * gobs.alt_streak_multi
-                if score_addition != 0:
-                    print(round(score_addition, 2))
-                    if gobs.score+score_addition <= stgs.max_score: gobs.score += score_addition
-                    else: gobs.score = stgs.max_score
-            
-            # score_addition += points_earned * (20/1131)*()
-        
+                else:
+                    angles = laser.get_angle()
+                    for index, laser_side in enumerate([((laser.x1, laser.y1), (laser.x2, laser.y2)), ((laser.x1, laser.y1), (laser.x3, laser.y3)), ((laser.x3, laser.y3), (laser.x2, laser.y2))]):
+                        point1, point2 = laser_side
+                        collision_point1 = self.x + self.size/2 * math.cos(angles[index] - math.pi/2), self.y + self.size/2 *  math.sin(angles[index] - math.pi/2)
+                        collision_point2 = self.x - self.size/2 * math.cos(angles[index] - math.pi/2), self.y - self.size/2 *  math.sin(angles[index] - math.pi/2)
+                        collisions = 1
+                        if if_point_on_line(point1[0], point1[1], point2[0], point2[1], collision_point1, 0.3): 
+                            self.bounce_off_line(laser, "1", index)
+                        elif if_point_on_line(point1[0], point1[1], point2[0], point2[1], collision_point2, 0.3):
+                            self.bounce_off_line(laser, "2", index)
+                        else: collisions = 0           
+                        if collisions == 1: 
+                            if time.time() - gobs.last_hit < stgs.qhmulti_interval: 
+                                gobs.quick_hit_multi *= stgs.quick_hit_multi
+                            gobs.last_hit = time.time()
+                            laser_length = distance((laser.x1, laser.y1), (laser.x2, laser.y2))
+                            gobs.shake_amount = stgs.shake_levels["BALL HIT"]/1131 * (1131-laser_length)
+                            score_addition = collisions * (   (20/1131) *  ( 1131 -  laser_length)  ) * gobs.quick_hit_multi * gobs.alt_streak_multi
+                            if score_addition != 0:
+                                #print(round(score_addition, 2))
+                                if gobs.score+score_addition <= stgs.max_score: gobs.score += score_addition
+                                else: gobs.score = stgs.max_score
+                
+
+
+
         new_x, new_y = self.x + self.xv, self.y + self.yv
         x_is_valid, y_is_valid = on_screen(self.screen_size, (new_x, new_y), buffer=self.size/2)
         if x_is_valid: self.x = new_x
@@ -319,9 +395,10 @@ class Ball:
         else:
             self.yv *= -1
             self.y += self.yv
+
         
-        laser_angle = laser.get_angle()
-        perpendicular= laser_angle - math.pi//2
+        #laser_angle = laser.get_angle()
+        #perpendicular= laser_angle - math.pi//2
 
 
         #return score_addition
@@ -359,13 +436,26 @@ class UI:
         self.game_over_surface = self.game_over_font.render(("GAME OVER"), None, (140, 150, 140))
         self.game_over_text_coords = 400-self.game_over_surface.get_width()/2, 400-self.game_over_surface.get_height()/2
 
+        self.win_font = pygame.font.SysFont(stgs.font_name, stgs.screen_height//10)
+        self.win_surface = self.win_font.render(("YOU WON!"), None, (140, 150, 140))
+        self.win_text_coords = 400-self.win_surface.get_width()/2, 400-self.win_surface.get_height()/2
+
+        self.play_again_font = pygame.font.SysFont(stgs.font_name, stgs.screen_height//40)
+        self.play_again_surface = self.play_again_font.render(("press 'r' to play again!"), None, (140, 150, 140))
+        #self.play_again_surface = self.play_again_font.render(("press '"+str(stgs.bindings["PLAY AGAIN"])+"' to play again!"), None, (140, 150, 140))
+        self.play_again_text_coords = 400-self.play_again_surface.get_width()/2, 600-self.play_again_surface.get_height()/2
+
+        self.welc_font = pygame.font.SysFont(stgs.font_name, stgs.screen_height//20)
+        self.welc_surface = self.welc_font.render(("Press Space to Begin"), None, (140, 150, 140))
+        self.welc_text_coords = 400-self.welc_surface.get_width()/2, 400-self.welc_surface.get_height()/2
+
     def update(self, score, player):
         #self.potential_score = score*node_distance
         self.score = score
         if len(player.nodes) == 1:
             self.potential_score = score
         else: 
-            self.potential_score = score +  (10/1131) *  ( 1131 - distance((player.laser.x1, player.laser.y1), (player.laser.x2, player.laser.y2)) )
+            self.potential_score = score +  (20/1131) *  ( 1131 - distance((player.laser.x1, player.laser.y1), (player.laser.x2, player.laser.y2)) )
             if self.potential_score > self.max_score: self.potential_score = self.max_score
         
     
@@ -389,3 +479,12 @@ class UI:
 
     def display_game_over(self, surface):
         surface.blit(self.game_over_surface, (self.game_over_text_coords))
+    
+    def display_win(self, surface):
+        surface.blit(self.win_surface, (self.win_text_coords))
+    
+    def display_play_again(self, surface):
+        surface.blit(self.play_again_surface, (self.play_again_text_coords))
+
+    def display_welcome(self, surface):
+        surface.blit(self.welc_surface, (self.welc_text_coords))

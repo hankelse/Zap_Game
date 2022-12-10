@@ -1,4 +1,4 @@
-from pygame.constants import K_SPACE, K_ESCAPE, K_w, K_a, K_s, K_d, K_UP, K_DOWN, K_LEFT, K_RIGHT
+from pygame.constants import K_SPACE, K_ESCAPE, K_w, K_a, K_s, K_d, K_UP, K_DOWN, K_LEFT, K_RIGHT, K_r
 
 
 #----------SETTINGS-----------#
@@ -10,19 +10,20 @@ shake_levels = {
     "ZAP": 10, 
     "BALL HIT": 5,
     "NODE HIT": 50,
+    "BALL DESTROYED": 100,
 }
 
 #---Performance_Settings---#
-max_fps = 60 #frames per second
+max_fps = 50 #frames per second
 
 #---Sprite Settings---#
 
 #nodes
-node_speed = ns = 5
+node_speed = ns = 7
 
 #balls
-balls_speed_range = [2, 4]
-num_balls = 1
+balls_speed_range = [5, 8]
+num_balls = 4
 
 #pickups
 num_pickups = 2
@@ -38,6 +39,8 @@ max_score = 100
 alt_strk_multi = 1
 quick_hit_multi = 1
 qhmulti_interval = 2
+zap_delay = 0.2
+zap_length = 0.5
 
 #---Control_Settings---#
  
@@ -55,5 +58,6 @@ bindings = {
     "ZAP": K_SPACE,
     
     "QUIT": K_ESCAPE,
-    "PLAY AGAIN": K_SPACE,
+    "PLAY AGAIN": K_r,
+    "BEGIN": K_SPACE,
 }
